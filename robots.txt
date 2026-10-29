@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.hasibabir.us/sitemap.xml
+Sitemap: https://profile.hasibabir.us/sitemap.xml
