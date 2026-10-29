@@ -1,0 +1,52 @@
+name: Clean portfolio SEO identity
+
+on:
+  push:
+    paths:
+      - '.github/workflows/clean-portfolio-seo.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  clean-seo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Clean portfolio identity metadata
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          text = p.read_text(encoding='utf-8')
+          head, marker, body = text.partition('</head>')
+          if not marker:
+              raise SystemExit('Missing </head>')
+
+          # Portfolio identity: Hasib Abir only. Keep artist/social links in page body untouched.
+          head = re.sub(r'<title>.*?</title>', '<title>Hasib Abir | Dubai System Analyst, IT Freelancer &amp; Tech Support</title>', head, count=1, flags=re.S)
+          head = re.sub(r'<meta name="description" content="[^"]*">', '<meta name="description" content="Hasib Abir is a Dubai-based System Analyst and IT freelancer focused on tech support, web and app design, digital systems, cybersecurity and AI tools.">', head, count=1)
+          head = re.sub(r'<meta property="og:site_name" content="[^"]*">', '<meta property="og:site_name" content="Hasib Abir">', head, count=1)
+          head = re.sub(r'<meta property="og:title" content="[^"]*">', '<meta property="og:title" content="Hasib Abir | Dubai System Analyst, IT Freelancer &amp; Tech Support">', head, count=1)
+          head = re.sub(r'<meta property="og:description" content="[^"]*">', '<meta property="og:description" content="Portfolio of Hasib Abir, a Dubai-based System Analyst and IT freelancer focused on tech support, web and app design, digital systems, cybersecurity and AI tools.">', head, count=1)
+          head = re.sub(r'<meta name="twitter:title" content="[^"]*">', '<meta name="twitter:title" content="Hasib Abir | Dubai System Analyst, IT Freelancer &amp; Tech Support">', head, count=1)
+          head = re.sub(r'<meta name="twitter:description" content="[^"]*">', '<meta name="twitter:description" content="Portfolio of Hasib Abir, a Dubai-based System Analyst and IT freelancer focused on tech support, web and app design, digital systems, cybersecurity and AI tools.">', head, count=1)
+          head = head.replace('"name": "mcHasib | Hasib Abir"', '"name": "Hasib Abir"')
+          head = head.replace('"description": "Official portfolio of Hasib Abir (mcHasib), a Dubai-based System Analyst, IT freelancer, web designer and creative technologist."', '"description": "Official portfolio of Hasib Abir, a Dubai-based System Analyst, IT freelancer, web designer and creative technologist."')
+          head = head.replace('"name": "Hasib Abir (mcHasib) - Dubai IT Freelancer, System Analyst and Web Designer"', '"name": "Hasib Abir | Dubai System Analyst, IT Freelancer and Web Designer"')
+          head = head.replace('"description": "Official portfolio and profile of Hasib Abir, also known as mcHasib."', '"description": "Official portfolio and professional profile of Hasib Abir."')
+
+          # Remove artist aliases from SEO alternateName arrays while retaining Hasib as a natural short name.
+          head = re.sub(r'"alternateName": \[\s*"Hasib Abir",\s*"mcHasib",\s*"hasibabir"\s*\]', '"alternateName": [\n        "Hasib Abir"\n      ]', head)
+          head = re.sub(r'"alternateName": \[\s*"mcHasib",\s*"Hasib",\s*"hasibabir",\s*"Haisbabir"\s*\]', '"alternateName": [\n        "Hasib"\n      ]', head)
+
+          p.write_text(head + marker + body, encoding='utf-8')
+      - name: Commit cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Use Hasib Abir as portfolio SEO identity" || exit 0
+          git push
