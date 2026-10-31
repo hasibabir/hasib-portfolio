@@ -1,0 +1,37 @@
+name: Fix phone number once
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix-phone:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Correct UAE phone number
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('+970551165095', '+971551165095')
+          s = s.replace('+970 5511 65095', '+971 5511 65095')
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit correction
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No correction needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Correct UAE phone country code [skip ci]"
+          git push
